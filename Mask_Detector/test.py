@@ -6,18 +6,73 @@ import numpy as np
 import imutils
 import time
 import cv2
+from datetime import datetime, timedelta
+import pprint
+import time
+from influxdb import InfluxDBClient
+from copy import deepcopy
+import pandas as pd
 import os
 import serial
 
-# 외부 카메라와 연결시 인풋랙이 있어서 강제로 켜줌
+# 외부 카메라와 연결시 인풋랙으로 인한 꺼짐현상 있어서 강제로 값을 넣어줌
 mask = 0
 withoutMask = 0
-
+# influxdb에 성공률 넣기
+print('물건 수량: ')
+product = int(input())
+good = 0
+#오류 검출을 위한 코드
 mask_cnt = 0
 withoutmask_cnt = 0
 prev_time = 0
 FPS = 10
-arduino = serial.Serial('COM4', 9600)
+# arduino = serial.Serial('COM4', 9600)
+
+
+# influxdb client 생성
+def get_ifdb(db, host='180.70.53.4', port=11334, user='root', passwd='root'):
+    # client 객체 생성, 해당 객체는 influxdb에 연결하기 위한 정보를 포함함
+    client = InfluxDBClient(host, port, user, passwd, db)
+
+    try:
+        # db 기반의 클라이언트 생성
+        client.create_database(db)
+        print('success')
+    except:
+        print('failed')
+        pass
+    return client
+
+
+def my_test(ifdb, good, bad):
+	json_body = []
+	tablename = 'my_table'
+	fieldname = 'my_field'
+	good_count = good
+	bad_count = bad
+	good_rate = good/product * 100
+	bad_rate = bad/product * 100
+
+	point = {
+		"measurement": tablename,
+		"tags": {
+			"Success_rate": "1st"
+		},
+		"fields": {
+			fieldname: 0,
+			"good_count": good_count,
+			"bad_count": bad_count,
+			"good_rate": good_rate,
+			"bad_rate": bad_rate,
+		},
+		"time": None,
+	}
+	np = deepcopy(point)
+	json_body.append(np)
+	time.sleep(1)
+	ifdb.write_points(json_body)
+	result = ifdb.query('select * from %s' % tablename)
 
 
 def detect_and_predict_mask(frame, faceNet, maskNet):
@@ -80,6 +135,8 @@ maskNet = load_model("mask_detector.model")
 print("[INFO] starting video stream...")
 vs = VideoStream(src=0).start()
 
+mydb = get_ifdb(db='success_rate')
+
 while True:
 	# 프레임 조절할꺼임
 	frame = vs.read()
@@ -118,24 +175,39 @@ while True:
 	withoutmask_cnt = withoutmask_cnt + 1
 
 	if key == ord("q"):
-		break
 
+		break
+# 물건이 없는 상태로 계속 있으면 기기 정지
 	elif withoutMask > 0.1 and mask < 0.7:
 		print('없음')
-		arduino.write(b'2\n')
-		if withoutmask_cnt > 500:
+		# arduino.write(b'2\n')
+		if withoutmask_cnt > 200:
 			print('물건이 없습니다. 기기를 정지합니다')
 			withoutmask_cnt = 0
+			bad = product - good
+			my_test(mydb, good, bad)
+			data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good/product * 100,"bad_rate":bad/product * 100}
+			df = pd.DataFrame(data, columns=[product, good, bad])
+			df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
 			break
 
 
 	elif mask > 0.9999999:
 		print('정상')
-		arduino.write(b'1\n')
+		# arduino.write(b'1\n')
 		withoutmask_cnt = 0
+		#성공 횟수 +=1
+		good = good + 1
 		time.sleep(2)
 
+	elif product == good:
+		bad = product - good
+		my_test(mydb, good, bad)
+		data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good / product * 100,
+				"bad_rate": bad / product * 100}
+		df = pd.DataFrame(data, columns=[product, good, bad])
+		df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
+		break
 
 cv2.destroyAllWindows()
 vs.stop()
-

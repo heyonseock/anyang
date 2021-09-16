@@ -12,6 +12,10 @@ import cv2
 import os
 import serial
 
+# 외부 카메라와 연결시 인풋랙으로 인한 꺼짐현상 있어서 강제로 값을 넣어줌
+On = 0
+Without = 0
+
 On_cnt = 0
 Without_cnt = 0
 prev_time = 0
@@ -111,7 +115,7 @@ while True:
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1) & 0xFF
 
-#오류 검출을 위한 count
+# 오류 검출을 위한 count
 
     On_cnt = On_cnt + 1
     Without_cnt = Without_cnt + 1
@@ -119,18 +123,19 @@ while True:
     if key == ord("q"):
         break
 
+    # 물건이 없는 상태로 계속 있으면 기기 정지
     elif Without > 0.1 and On < 0.7:
         print('없음')
+        # 아두이노 모터 제어
         arduino.write(b'2\n')
-        if Without_cnt > 100:
+        if Without_cnt > 500:
             print('물건이 없습니다. 기기를 정지합니다')
             Without_cnt = 0
             break
 
-
     elif On > 0.9999998:
         print('정상')
-
+        # 아두이노 모터 제어
         arduino.write(b'1\n')
         Without_cnt = 0
         time.sleep(2)

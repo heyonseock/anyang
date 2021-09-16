@@ -1,6 +1,6 @@
 #######################################
 # 마스크 오류 검출 여기다 온도센서랑
-# 아두이노 온도 측정 코드는 delay 없이 값을 넣어야 한다.
+# 아두이노 온도 측정 코드는 delay 없이 값을 넣어야 한다. // 다시 아두이노 부분 delay(100)으로 해줬음
 # 안그러면 비디오 출력 과정에서 끊기는 현상을 볼 수 있다.
 #######################################
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
@@ -14,7 +14,7 @@ import cv2
 import serial
 import os
 
-# 외부 카메라와 연결시 인풋랙이 있어서 강제로 켜줌
+# 외부 카메라와 연결시 인풋랙으로 인한 꺼짐현상 있어서 강제로 값을 넣어줌
 mask = 0
 withoutMask = 0
 
