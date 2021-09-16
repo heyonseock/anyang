@@ -1,6 +1,4 @@
-good_rate,bad_rate
-11,39
-7,40
-7,23
-6,44
-10,9,1
+product,good_count,bad_count,good_rate,bad_rate
+3,3,0,100,0
+4.0,4.0,0.0,100.0,0.0
+5.0,5.0,0.0,100.0,0.0

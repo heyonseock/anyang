@@ -199,15 +199,14 @@ while True:
 		#성공 횟수 +=1
 		good = good + 1
 		time.sleep(2)
-
-	elif product == good:
-		bad = product - good
-		my_test(mydb, good, bad)
-		data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good / product * 100,
-				"bad_rate": bad / product * 100}
-		df = pd.DataFrame(data, columns=[product, good, bad])
-		df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
-		break
+		if product == good:
+			bad = product - good
+			my_test(mydb, good, bad)
+			data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good / product * 100,
+					"bad_rate": bad / product * 100}
+			df = pd.DataFrame(data, columns=[product, good, bad, good / product * 100, bad / product * 100])
+			df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
+			break
 
 cv2.destroyAllWindows()
 vs.stop()
