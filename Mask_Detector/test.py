@@ -4,15 +4,11 @@ from tensorflow.keras.models import load_model
 from imutils.video import VideoStream
 import numpy as np
 import imutils
-import time
 import cv2
-from datetime import datetime, timedelta
-import pprint
 import time
 from influxdb import InfluxDBClient
 from copy import deepcopy
 import pandas as pd
-import os
 import serial
 
 # 외부 카메라와 연결시 인풋랙으로 인한 꺼짐현상 있어서 강제로 값을 넣어줌
@@ -22,7 +18,8 @@ withoutMask = 0
 print('물건 수량: ')
 product = int(input())
 good = 0
-#오류 검출을 위한 코드
+
+# 오류 검출을 위한 코드
 mask_cnt = 0
 withoutmask_cnt = 0
 prev_time = 0
@@ -181,7 +178,7 @@ while True:
 	elif withoutMask > 0.1 and mask < 0.7:
 		print('없음')
 		# arduino.write(b'2\n')
-		if withoutmask_cnt > 200:
+		if withoutmask_cnt > 20:
 			print('물건이 없습니다. 기기를 정지합니다')
 			withoutmask_cnt = 0
 			bad = product - good
@@ -192,7 +189,7 @@ while True:
 			break
 
 
-	elif mask > 0.9999999:
+	elif mask > 0.9998:
 		print('정상')
 		# arduino.write(b'1\n')
 		withoutmask_cnt = 0

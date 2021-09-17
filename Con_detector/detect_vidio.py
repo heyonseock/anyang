@@ -10,17 +10,68 @@ import imutils
 import time
 import cv2
 import os
+from influxdb import InfluxDBClient
+from copy import deepcopy
+import pandas as pd
 import serial
 
 # 외부 카메라와 연결시 인풋랙으로 인한 꺼짐현상 있어서 강제로 값을 넣어줌
 On = 0
 Without = 0
 
+# influxdb에 성공률 넣기
+print('물건수량: ')
+product = int(input())
+good = 0
+
+#오류 검출을 위해서 넣음
 On_cnt = 0
 Without_cnt = 0
 prev_time = 0
 FPS = 10
 arduino = serial.Serial('COM4', 9600)
+
+
+# influxdb client
+def get_ifdb(db, host='180.70.53.4', port=11334, user='root', passwd='root'):
+    client = InfluxDBClient(host, port, user, passwd. db)
+
+    try:
+        client.create_database(db)
+        print('success')
+    except:
+        print('failed')
+        pass
+    return client
+
+def my_test(ifdb, good, bad):
+    json_body = []
+    tablename = 'my_table'
+    fieldname = 'my_field'
+    good_count = good
+    bad_count = bad
+    good_rate = good/product * 100
+    bad_rate = bad/product * 100
+
+    point = {
+        "measurement": tablename,
+        "tags": {
+            "Success_rate": "1st"
+        },
+        "fields":{
+            fieldname: 0,
+            "good_count": good_count,
+            "bad_count": bad_count,
+            "good_rate": good_rate,
+            "bad_rate": bad_rate,
+        },
+        "time": None,
+    }
+    np = deepcopy(point)
+    json_body.append(np)
+    time.sleep(1)
+    ifdb.write_popints(json_body)
+    result = ifdb.query('select * from %s' % tablename)
 
 
 def detect_and_predict_con(frame, conNet, detectNet):
@@ -82,6 +133,8 @@ detectNet = load_model("detector.model")
 print("[INFO] starting video stream...")
 vs = VideoStream(src=0).start()
 
+mydb = get_ifdb(db='success_rate')
+
 while True:
     #프레임 조절할꺼임
     frame = vs.read()
@@ -128,9 +181,15 @@ while True:
         print('없음')
         # 아두이노 모터 제어
         arduino.write(b'2\n')
-        if Without_cnt > 500:
+        if Without_cnt > 100:
             print('물건이 없습니다. 기기를 정지합니다')
             Without_cnt = 0
+            bad = product - good
+            my_test(mydb, good, bad)
+            data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good / product * 100,
+                    "bad_rate": bad / product * 100}
+            df = pd.DataFrame(data, columns=[product, good, bad])
+            df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
             break
 
     elif On > 0.9999998:
@@ -138,7 +197,16 @@ while True:
         # 아두이노 모터 제어
         arduino.write(b'1\n')
         Without_cnt = 0
+        good = good + 1
         time.sleep(2)
+        if product == good:
+            bad = product - good
+            my_test(mydb, good, bad)
+            data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good / product * 100,
+                    "bad_rate": bad / product * 100}
+            df = pd.DataFrame(data, columns=[product, good, bad, good / product * 100, bad / product * 100])
+            df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
+            break
 
 cv2.destroyAllWindows()
 vs.stop()
