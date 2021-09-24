@@ -11,21 +11,6 @@ from copy import deepcopy
 import pandas as pd
 import serial
 
-# 외부 카메라와 연결시 인풋랙으로 인한 꺼짐현상 있어서 강제로 값을 넣어줌
-mask = 0
-withoutMask = 0
-# influxdb에 성공률 넣기
-print('물건 수량: ')
-product = int(input())
-good = 0
-
-# 오류 검출을 위한 코드
-mask_cnt = 0
-withoutmask_cnt = 0
-prev_time = 0
-FPS = 10
-# arduino = serial.Serial('COM4', 9600)
-
 
 # influxdb client 생성
 def get_ifdb(db, host='180.70.53.4', port=11334, user='root', passwd='root'):
@@ -121,6 +106,19 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 	return (locs, preds)
 
 
+# 외부 카메라와 연결시 인풋랙으로 인한 꺼짐현상 있어서 강제로 값을 넣어줌
+mask = 0
+withoutMask = 0
+# influxdb에 성공률 넣기
+product = 0
+good = 0
+
+# 오류 검출을 위한 코드
+mask_cnt = 0
+withoutmask_cnt = 0
+prev_time = 0
+FPS = 10
+arduino = serial.Serial('COM4', 9600)
 # cv2 (DNN)뉴런 모듈 사용
 # 이게 mask_detector.model을 한층 더 구별하기 쉬워짐
 prototxtPath = r"face_detector\deploy.prototxt"
@@ -171,8 +169,13 @@ while True:
 	mask_cnt = mask_cnt + 1
 	withoutmask_cnt = withoutmask_cnt + 1
 
-	if key == ord("q"):
+	# 이부분에 초음파 센서 시리얼 넘버 읽기
+	count = float(arduino[0:5].decode())
+	# 시리얼 읽어서 하나씩 더하기 여기에 시리얼 값 변경해줘야 됨
+	if count == 40:
+		product = product + 1
 
+	if key == ord("q"):
 		break
 # 물건이 없는 상태로 계속 있으면 기기 정지
 	elif withoutMask > 0.1 and mask < 0.7:

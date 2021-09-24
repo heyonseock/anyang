@@ -136,13 +136,13 @@ while True:
 				print(f'{temp}°C')
 				print('정상')
 				arduino.write(b'2\n')
-				time.sleep(1)
+				#time.sleep(1)
 			else:
 				print('마스크 착용')
 				print(f'{temp}°C')
 				print('높음')
 				arduino.write(b'1\n')
-				time.sleep(1)
+				#time.sleep(1)
 				arduino.write(b'2\n')
 			mask_cnt = 0
 			withoutmask_cnt = 0
@@ -154,13 +154,13 @@ while True:
 				print(f'{temp}°C')
 				print('마스크를 써주십쇼')
 				arduino.write(b'1\n')
-				time.sleep(1)
+				#time.sleep(1)
 				arduino.write(b'2\n')
 			else:
 				print(f'{temp}°C')
 				print('높음')
 				arduino.write(b'1\n')
-				time.sleep(1)
+				#time.sleep(1)
 				arduino.write(b'2\n')
 
 			mask_cnt = 0
