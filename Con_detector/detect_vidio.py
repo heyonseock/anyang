@@ -15,6 +15,7 @@ from copy import deepcopy
 import pandas as pd
 import serial
 
+
 # influxdb client
 def get_ifdb(db, host='180.70.53.4', port=11334, user='root', passwd='root'):
     client = InfluxDBClient(host, port, user, passwd. db)
@@ -26,6 +27,7 @@ def get_ifdb(db, host='180.70.53.4', port=11334, user='root', passwd='root'):
         print('failed')
         pass
     return client
+
 
 def my_test(ifdb, good, bad):
     json_body = []
@@ -168,6 +170,12 @@ while True:
 
     On_cnt = On_cnt + 1
     Without_cnt = Without_cnt + 1
+
+    # 이부분에 초음파 센서 시리얼 넘버 읽기
+    count = float(arduino[0:5].decode())
+    # 시리얼 읽어서 하나씩 더하기 여기에 시리얼 값 변경해줘야 됨
+    if count == 40:
+        product = product + 1
 
     if key == ord("q"):
         break
