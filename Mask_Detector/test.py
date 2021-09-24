@@ -65,7 +65,6 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 	# 얼굴 감지
 	faceNet.setInput(blob)
 	detections = faceNet.forward()
-	print(detections.shape)
 
 	# 얼굴 목록, 해당 위치 및 얼굴 마스크 네트워크의 예측 목록을 초기화
 	faces = []
@@ -196,7 +195,7 @@ while True:
 		print('정상')
 		# arduino.write(b'1\n')
 		withoutmask_cnt = 0
-		#성공 횟수 +=1
+		# 성공 횟수 +=1
 		good = good + 1
 		time.sleep(2)
 		if product == good:

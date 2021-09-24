@@ -33,7 +33,6 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 	# 얼굴 감지
 	faceNet.setInput(blob)
 	detections = faceNet.forward()
-	print(detections.shape)
 
 	# 얼굴 목록, 해당 위치 및 얼굴 마스크 네트워크의 예측 목록을 초기화
 	faces = []
@@ -101,7 +100,7 @@ while True:
 
 		if cv2.waitKey(1) > 0:
 			break
-	frame = imutils.resize(frame, width=400)
+	frame = imutils.resize(frame, width=1024)
 	(locs, preds) = detect_and_predict_mask(frame, faceNet, maskNet)
 
 	for (box, pred) in zip(locs, preds):
@@ -129,7 +128,7 @@ while True:
 	if key == ord("q"):
 		break
 
-	if mask > 0.98:
+	if mask > 0.95:
 		if mask_cnt > 20:
 			if temp < 38.0:
 				print('마스크 착용')

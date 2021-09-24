@@ -14,5 +14,5 @@ void loop() {
 
   //측정 온도 섭씨로 읽어 모니터링 프로그램에 출력
   Serial.println(mlx.readObjectTempC()); 
-  delay(100);
+  delay(150);
 }

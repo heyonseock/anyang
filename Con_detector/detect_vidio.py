@@ -15,23 +15,6 @@ from copy import deepcopy
 import pandas as pd
 import serial
 
-# 외부 카메라와 연결시 인풋랙으로 인한 꺼짐현상 있어서 강제로 값을 넣어줌
-On = 0
-Without = 0
-
-# influxdb에 성공률 넣기
-print('물건수량: ')
-product = int(input())
-good = 0
-
-#오류 검출을 위해서 넣음
-On_cnt = 0
-Without_cnt = 0
-prev_time = 0
-FPS = 10
-arduino = serial.Serial('COM4', 9600)
-
-
 # influxdb client
 def get_ifdb(db, host='180.70.53.4', port=11334, user='root', passwd='root'):
     client = InfluxDBClient(host, port, user, passwd. db)
@@ -82,7 +65,6 @@ def detect_and_predict_con(frame, conNet, detectNet):
     # 감지
     conNet.setInput(blob)
     detections = conNet.forward()
-    print(detections.shape)
 
     # 목록, 해당 위치 및 오류검출 네트워크의 예측 목록을 초기화
     cons = []
@@ -121,6 +103,20 @@ def detect_and_predict_con(frame, conNet, detectNet):
 
     return (locs, preds)
 
+# 외부 카메라와 연결시 인풋랙으로 인한 꺼짐현상 있어서 강제로 값을 넣어줌
+On = 0
+Without = 0
+
+# influxdb에 성공률 넣기
+product = 0
+good = 0
+
+# 오류 검출을 위해서 넣음
+On_cnt = 0
+Without_cnt = 0
+prev_time = 0
+FPS = 10
+arduino = serial.Serial('COM4', 9600)
 
 # cv2 (DNN)뉴런 모듈 사용
 # 이게 detector.model을 한층 더 구별하기 쉬워짐
@@ -192,7 +188,7 @@ while True:
             df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
             break
 
-    elif On > 0.9999998:
+    elif On > 0.9998:
         print('정상')
         # 아두이노 모터 제어
         arduino.write(b'1\n')
