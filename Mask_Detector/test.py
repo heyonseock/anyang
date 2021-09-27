@@ -1,3 +1,6 @@
+######################################
+# con_detect에 넣기전에 코드 실험
+######################################
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
@@ -113,6 +116,7 @@ product = 0
 good = 0
 
 # 오류 검출을 위한 코드
+pro_cnt = 0
 mask_cnt = 0
 withoutmask_cnt = 0
 prev_time = 0
@@ -132,6 +136,7 @@ vs = VideoStream(src=0).start()
 mydb = get_ifdb(db='success_rate')
 
 while True:
+	line = arduino.readline()
 	# 프레임 조절할꺼임
 	frame = vs.read()
 	ret = vs.read()
@@ -166,46 +171,54 @@ while True:
 
 	# 오류 검출을 위한 count
 	mask_cnt = mask_cnt + 1
-	withoutmask_cnt = withoutmask_cnt + 1
 
 	# 이부분에 초음파 센서 시리얼 넘버 읽기
-	count = float(arduino[0:5].decode())
+	count = float(line[0:4].decode())
 	# 시리얼 읽어서 하나씩 더하기 여기에 시리얼 값 변경해줘야 됨
-	if count == 40:
-		product = product + 1
+	if count <= 150:
+		pro_cnt = pro_cnt + 1
 
+	# 장비정지
 	if key == ord("q"):
+		bad = product - good
+		my_test(mydb, good, bad)
+		data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good / product * 100,
+				"bad_rate": bad / product * 100}
+		df = pd.DataFrame(data, columns=[product, good, bad, good / product * 100, bad / product * 100])
+		df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
 		break
 # 물건이 없는 상태로 계속 있으면 기기 정지
-	elif withoutMask > 0.1 and mask < 0.7:
-		print('없음')
-		# arduino.write(b'2\n')
-		if withoutmask_cnt > 20:
+	elif withoutMask > 0.1 and mask < 0.9998:
+		withoutmask_cnt = withoutmask_cnt + 1
+		if pro_cnt == 20:
+			print('오류')
+			product = product + 1
+			pro_cnt = 0
+			withoutmask_cnt = 0
+			arduino.write(b'2\n')
+			time.sleep(2)
+
+		elif withoutmask_cnt > 200 and count > 600:
 			print('물건이 없습니다. 기기를 정지합니다')
 			withoutmask_cnt = 0
 			bad = product - good
 			my_test(mydb, good, bad)
-			data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good/product * 100,"bad_rate":bad/product * 100}
+			data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good/product * 100, "bad_rate": bad/product * 100}
 			df = pd.DataFrame(data, columns=[product, good, bad])
 			df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
 			break
 
 
-	elif mask > 0.9998:
-		print('정상')
-		# arduino.write(b'1\n')
-		withoutmask_cnt = 0
+	elif mask >= 0.9998:
 		# 성공 횟수 +=1
-		good = good + 1
-		time.sleep(2)
-		if product == good:
-			bad = product - good
-			my_test(mydb, good, bad)
-			data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good / product * 100,
-					"bad_rate": bad / product * 100}
-			df = pd.DataFrame(data, columns=[product, good, bad, good / product * 100, bad / product * 100])
-			df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
-			break
+		if pro_cnt == 20:
+			print('정상')
+			product = product + 1
+			pro_cnt = 0
+			withoutmask_cnt = 0
+			good = good + 1
+			arduino.write(b'1\n')
+			time.sleep(2)
 
 cv2.destroyAllWindows()
 vs.stop()

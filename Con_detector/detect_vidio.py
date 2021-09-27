@@ -9,7 +9,6 @@ import numpy as np
 import imutils
 import time
 import cv2
-import os
 from influxdb import InfluxDBClient
 from copy import deepcopy
 import pandas as pd
@@ -114,10 +113,12 @@ product = 0
 good = 0
 
 # 오류 검출을 위해서 넣음
+pro_cnt = 0
 On_cnt = 0
 Without_cnt = 0
 prev_time = 0
 FPS = 10
+# 아두이노 시리얼 읽기
 arduino = serial.Serial('COM4', 9600)
 
 # cv2 (DNN)뉴런 모듈 사용
@@ -134,7 +135,8 @@ vs = VideoStream(src=0).start()
 mydb = get_ifdb(db='success_rate')
 
 while True:
-    #프레임 조절할꺼임
+    line = arduino.readline()
+    # 프레임 조절할꺼임
     frame = vs.read()
     ret = vs.read()
     current_time = time.time() - prev_time
@@ -149,11 +151,12 @@ while True:
     frame = imutils.resize(frame, width=400)
     (locs, preds) = detect_and_predict_con(frame, conNet, detectNet)
 
+    # 예측용 박스 만들어주기
     for (box, pred) in zip(locs, preds):
 
         (startX, startY, endX, endY) = box
         (On, Without) = pred
-
+        # 컨베이너랑 컨베이너 위에 올려져 있는거 검출
         label = "ON" if On > Without else "Without"
         color = (0, 255, 0) if label == "ON" else (0, 0, 255)
 
@@ -166,26 +169,41 @@ while True:
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1) & 0xFF
 
-# 오류 검출을 위한 count
+    # 오류 검출을 위한 count
 
     On_cnt = On_cnt + 1
-    Without_cnt = Without_cnt + 1
 
     # 이부분에 초음파 센서 시리얼 넘버 읽기
-    count = float(arduino[0:5].decode())
-    # 시리얼 읽어서 하나씩 더하기 여기에 시리얼 값 변경해줘야 됨
-    if count == 40:
-        product = product + 1
+    count = float(line[0:4].decode())
 
+    # 시리얼 읽어서 하나씩 더하기 여기에 시리얼 값 변경해줘야 됨
+    if count <= 150:
+        pro_cnt = pro_cnt + 1
+
+    # 장비 긴급 정지
     if key == ord("q"):
+        bad = product - good
+        my_test(mydb, good, bad)
+        data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good / product * 100,
+                "bad_rate": bad / product * 100}
+        df = pd.DataFrame(data, columns=[product, good, bad, good / product * 100, bad / product * 100])
+        df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
         break
 
-    # 물건이 없는 상태로 계속 있으면 기기 정지
-    elif Without > 0.1 and On < 0.7:
-        print('없음')
-        # 아두이노 모터 제어
-        arduino.write(b'2\n')
-        if Without_cnt > 100:
+    # 오류 및 아무것도 없을때
+    elif Without > 0.1 and On < 0.9998:
+        Without_cnt = Without_cnt + 1
+        # 오류일때
+        if pro_cnt == 20:
+            print('없음')
+            product = product + 1
+            pro_cnt = 0
+            Without_cnt = 0
+            # 아두이노 모터 제어
+            arduino.write(b'2\n')
+            time.sleep(2)
+        # 아무것도 없을때
+        elif Without_cnt > 200 and count > 600:
             print('물건이 없습니다. 기기를 정지합니다')
             Without_cnt = 0
             bad = product - good
@@ -195,22 +213,19 @@ while True:
             df = pd.DataFrame(data, columns=[product, good, bad])
             df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
             break
-
+    # 성공 확률을 99.98%로 해줬음
     elif On > 0.9998:
-        print('정상')
-        # 아두이노 모터 제어
-        arduino.write(b'1\n')
-        Without_cnt = 0
-        good = good + 1
-        time.sleep(2)
-        if product == good:
-            bad = product - good
-            my_test(mydb, good, bad)
-            data = {"product": product, "good_count": good, "bad_count": bad, "good_rate": good / product * 100,
-                    "bad_rate": bad / product * 100}
-            df = pd.DataFrame(data, columns=[product, good, bad, good / product * 100, bad / product * 100])
-            df.to_csv('success_rate.csv', mode='a', index=False, encoding='cp949')
-            break
+        if pro_cnt == 20:
+            print('정상')
+            product = product + 1
+            pro_cnt = 0
+            Without_cnt = 0
+            Without_cnt = 0
+            good = good + 1
+            # 아두이노 모터 제어
+            arduino.write(b'1\n')
+            time.sleep(2)
+
 
 cv2.destroyAllWindows()
 vs.stop()
