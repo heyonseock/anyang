@@ -8,3 +8,6 @@ pyserial = 3.5
 imutils = 0.5.3   
 numpy = 1.19.5   
 pandas = 1.3.3   
+
+
+09/30 https://github.com/tzutalin/labelImg에 있는 라벨링 메이커로 사진 자른뒤 학습
