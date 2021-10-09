@@ -10,5 +10,6 @@ numpy = 1.19.5
 pandas = 1.3.3   
 
 
-09/30 https://github.com/tzutalin/labelImg에 있는 라벨링 메이커로 사진 자른뒤 학습   
-10/90 for object detection https://github.com/AlexeyAB/darknet
+https://github.com/tzutalin/labelImg for labeling Images  
+https://github.com/AlexeyAB/darknet for object detection   
+https://github.com/Kitware/CMake   
