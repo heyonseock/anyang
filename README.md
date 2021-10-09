@@ -8,8 +8,3 @@ pyserial = 3.5
 imutils = 0.5.3   
 numpy = 1.19.5   
 pandas = 1.3.3   
-
-
-https://github.com/tzutalin/labelImg for labeling Images  
-https://github.com/AlexeyAB/darknet for object detection   
-https://github.com/Kitware/CMake   
