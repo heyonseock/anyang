@@ -48,11 +48,11 @@ while True:
     # z 누르면 캡쳐(콘테이너 왔을때 해주십쇼)
     if con_cap_key == ord("z"):
         con_cnt = con_cnt + 1
-        cv2.imwrite("C:/Users/jpg03/Downloads/dataset/con_1/con" + str(con_cnt) + ".png", frame)
+        cv2.imwrite("C:/Users/jpg03/Desktop/anyang/Con_detector/dataset/data/con" + str(con_cnt) + ".jpg", frame)
     # x누르면 캡쳐(물건만 캡쳐해 주십셔)
     if on_cap_key == ord("x"):
         on_cnt = on_cnt + 1
-        cv2.imwrite("C:/Users/jpg03/Downloads/dataset/on/on" + str(on_cnt) + ".png", frame)
+        cv2.imwrite("C:/Users/jpg03/Desktop/anyang/Con_detector/dataset/data/ON" + str(on_cnt) + ".jpg", frame)
 
 
 cv2.destroyAllWindows()

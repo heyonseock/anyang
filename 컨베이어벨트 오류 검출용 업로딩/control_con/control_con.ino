@@ -8,7 +8,7 @@ int posH = 0;
 void setup()
 {
   Serial.begin(9600);      // 통신속도 9600bps로 시리얼 통신 시작
-  myservoH.attach(2);  // 서보모터를 쉴드의 8번에 연결한다.
+  myservoH.attach(5);  // 서보모터를 쉴드의 5번에 연결한다.
   pinMode(trig, OUTPUT);    // 트리거 핀 출력으로 선언
   pinMode(echo, INPUT);     // 에코 핀 입력으로 선언
 }
