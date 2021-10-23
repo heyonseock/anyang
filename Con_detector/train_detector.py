@@ -18,13 +18,14 @@ from imutils import paths
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import tensorflow as tf
 
 # 베치 사이즈와 learning rate
 INIT_LR = 1e-4
-EPOCHS = 20
+EPOCHS = 64
 BS = 32
 
-DIRECTORY = r"C:\Users\jpg03\Desktop\anyang\Con_detector\dataset"
+DIRECTORY = r"C:\Users\lee37\Desktop\anyang\Con_detector\dataset"
 CATEGORIES = ["ON", "without"]
 
 # 이미지 가져오기
@@ -109,8 +110,9 @@ print(classification_report(testY.argmax(axis=1), predIdxs, target_names=lb.clas
 # 모델 저장
 print("[INFO] saving detector model...")
 
-model.save("detector.model", save_format="h5")
+model.save("detector.h5", save_format="h5")
 model.save_weights('mnist_checkpoint')
+model.save('linear_regression.ckpt')
 
 # 손실률과 정확도 띄우기
 N = EPOCHS
