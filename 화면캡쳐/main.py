@@ -12,7 +12,7 @@ capture.set(cv2.CAP_PROP_FRAME_WIDTH, 250)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 350)
 
 con_cnt = 0
-on_cnt = 0
+on_cnt = 465
 
 
 # 이미지 처리하기
